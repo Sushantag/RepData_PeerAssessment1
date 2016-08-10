@@ -1,0 +1,162 @@
+---
+title: "Project 1"
+author: "Sushant G"
+date: "9 August 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This project is part of "Reproducible Research" MOOC course on Coursera. This assignment makes use of data from a personal activity monitoring device, which collected data at 5 min intervals throughout the day. Data from an anonymous user collected during the months of October and November 2012 was downloaded from the [course website](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) and saved in the working folder of R. 
+
+The variables included in this dataset are:
+
+1. **steps**: Number of steps taking in a 5-minute interval (missing values are coded as NA). 
+2. **date**: The date on which the measurement was taken in YYYY-MM-DD format.  
+3. **interval**: Identifier for the 5-minute interval in which measurement was taken.    
+
+The assignment will be solved in the following 5 Phases
+
+### Phase 1- Loading and preprocessing data  
+1. Load the data into R.  
+read_csv from readr package is used to read the data as it can read csv files in zip folders.
+
+```{r load Data, results='hide'}
+library(readr)
+activity <- read_csv("activity.zip")
+```
+  
+2. Process/transform the data (if necessary) into a format suitable for your analysis  
+No pre-processing steps are necessary
+
+### Phase 2- What is mean total number of steps taken per day?
+
+1. Calcuate the total no. of steps taken per day.  
+Using dplyr package, generate second dataframe 'daily_steps' tabulating the number of steps taken in each day.
+
+```{r Calculate Total Steps per Day, results='hide'}
+suppressMessages(library(dplyr))
+#suppressMessages(library(dplyr)) supresses the messages shown after loading dplyr
+
+daily_steps = activity %>% group_by(date) %>% summarise(total_steps_per_day = sum(steps, na.rm=T))
+```
+  
+2. Plot the histogram of total number of steps taken each day using the hist function
+
+```{r Histogram, echo=TRUE, fig.width=7}
+with(daily_steps, hist(total_steps_per_day, xlab = "Total Steps Taken Per Day", main = "Histogram of Total Steps Taken Per Day"))
+```
+  
+3. Calculate and report the mean and median of the total number of steps taken per day.  
+To Calculate and report the mean and median of the total number of steps taken per day we can use the summary function. Knowing that the third and fourth element of the output of summary function are the median and mean respectively we capture them in steps_median and steps_mean variables respectively.
+
+```{r Calculate mean and median}
+steps_median <- summary(daily_steps$total_steps_per_day)[[3]]
+steps_mean <- summary(daily_steps$total_steps_per_day)[[4]]
+#options(scipen = 1) will set the output format of numbers such that numbers larger than 10^5 will be shown in scientific notation
+options(scipen = 1)
+```
+  + Mean of Total no. of steps taken per day = `r steps_mean` steps
+  + Median of Total no. of steps taken per day = `r steps_median` steps
+ 
+### Phase 3- What is the average daily activity pattern?
+
+1.  Make a time series plot of 5 minute interval and the average no. of steps taken averaged across all days.  
+  + The first step is to create a dataframe 'pattern' tabulating the average no. of steps for each time interval using dplyr package.
+
+```{r activity pattern}
+suppressMessages(library(dplyr))
+pattern = activity %>% dplyr::group_by(interval) %>% dplyr::summarise(avg_steps = mean(steps, na.rm = T))
+```
+
+  + Generata a time series plot using the plot function (type = "l")
+  
+```{r time series plot}
+with(pattern,plot(interval,avg_steps, type = "l", main = "Average Number of Steps across 5 min intervals", xlab = "Interval", ylab = "Average Number of Steps"))
+```
+
+2. Which 5 minute interval (from 'pattern' data frame) contains the maximum no. of steps?
+```{r max no of steps}
+max_steps = pattern$interval[which.max(pattern$avg_steps)]
+```
+  + Max avg. no. of steps was observed in the interval `r max_steps`
+
+### Phase 4- Imputing Missing Values
+1. Calculate and report the total no. of missing values in the 'activity' data frame.  
+Calculate the no. of missing values by using the table function over is.na.dataframe on activity dataframe.
+```{r calculate no. of missing values}
+missing_values  = table(is.na.data.frame(activity))[[2]]
+```
+  + Total number of missing values  = `r missing_values`  
+
+2. Devise a strategy to fill missing data.
+The missing data for a time interval can be filled using the avg. no. of steps for that interval. We can use the data computed in 'pattern' dataframe for this purpose.
+
+3. Create a new dataset from 'activity' dataframe after filling the missing values with values from 'pattern' dataframe 
+
+```{r imputing NAs}
+#merge activity and pattern dataframes 
+suppressMessages(library(plyr))
+suppressMessages(library(dplyr))
+x = join(activity, pattern)
+
+#replace NAs in steps by rounding off avg_steps to zero decimal places 
+activity = x %>% dplyr::mutate(steps = ifelse(is.na(steps), round(avg_steps,0),steps)) %>% dplyr::select(steps, date, interval)
+```
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps? 
+
+  + Create a dataframe 'daily_steps' tabulating the number of steps taken in each day.
+
+```{r Create daily_steps}
+suppressMessages(library(dplyr))
+#suppressMessages(library(dplyr)) supresses the messages shown after loading dplyr
+
+daily_steps = activity %>% dplyr::group_by(date) %>% dplyr::summarise(total_steps_per_day = sum(steps, na.rm=T))
+```
+  
+  + Create a histogram using the hist function
+
+```{r Histogram 2, echo=TRUE, fig.width=7}
+with(daily_steps, hist(total_steps_per_day, xlab = "Total Steps Taken Per Day", main = "Histogram of Total Steps Taken Per Day"))
+```  
+
+  + Calculate and report the mean and median of the total number of steps taken per day.  
+To Calculate and report the mean and median of the total number of steps taken per day we can use the summary function. Knowing that the third and fourth element of the output of summary function are the median and mean respectively we capture them in steps_median and steps_mean variables respectively.
+
+```{r Calculate mean1 and median1}
+steps_median1 <- summary(daily_steps$total_steps_per_day)[[3]]
+steps_mean1 <- summary(daily_steps$total_steps_per_day)[[4]]
+#options(scipen = 1) will set the output format of numbers such that numbers larger than 10^5 will be shown in scientific notation
+options(scipen = 1)
+```
+  + Mean of Total no. of steps taken per day = `r steps_mean1` steps
+  + Median of Total no. of steps taken per day = `r steps_median1` steps   
+    
+  The mean and median were `r steps_mean` and `r steps_median` when computed without imputing data. It can be seen that the mean and median values are higher after imputing data than those previously computed without imputing data. 
+  
+### Phase 5- Are there any differences in activity patterns between weekdays and weekends?
+
+1. Create a new factor variable in the imputed activity dataframe with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+
+```{r create weekday in activity dataframe}
+activity = activity %>% dplyr::mutate(weekday = ifelse(weekdays(date)=="Saturday"|weekdays(date) == "Sunday", "weekend","weekday"))
+activity$weekday = as.factor(activity$weekday)
+```
+
+2. Make a panel plot (a panel each for weekday and weekend) of the 5 min interval and avg. no. of steps taken.
+  + A data frame 'pattern' is created using the dplyr package to calculate the average no. of steps for each time interval.
+  + The multipanel plot is created using ggplot2 package. Unlike the sample included in the readme file of the assignment, the two panels are placed side by side to get a better comparison since both the plots have the same y axis in this panel arrangement.
+
+```{r create multipanel plot, fig.width=10}
+#first create a data frame pattern calculating the average no. of steps for each time interval
+pattern = activity %>% dplyr::group_by(interval, weekday) %>% dplyr::summarise(avg_steps = mean(steps)) 
+
+#create multipanel plot using ggplot
+library(ggplot2)
+ggplot(pattern, aes(x=interval, y = avg_steps)) + geom_line() + facet_grid(.~weekday) + theme_bw() + labs(title = "Average No. of Steps at Different Time Intervals \n", x = "\n Time Interval", y = "Average No. of Steps \n")
+```
