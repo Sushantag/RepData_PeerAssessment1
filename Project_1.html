@@ -153,8 +153,6 @@ No pre-processing steps are necessary</li>
 Using dplyr package, generate second dataframe ‘daily_steps’ tabulating the number of steps taken in each day.</li>
 </ol>
 <pre class="r"><code>library(dplyr)
-#suppressMessages(library(dplyr)) supresses the messages shown after loading dplyr
-
 daily_steps = activity %&gt;% group_by(date) %&gt;% summarise(total_steps_per_day = sum(steps, na.rm=T))</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>Plot the histogram of total number of steps taken each day using the hist function</li>
@@ -226,8 +224,6 @@ activity = x %&gt;% dplyr::mutate(steps = ifelse(is.na(steps), round(avg_steps,0
 <li>Create a dataframe ‘daily_steps’ tabulating the number of steps taken in each day.</li>
 </ul>
 <pre class="r"><code>library(dplyr)
-#suppressMessages(library(dplyr)) supresses the messages shown after loading dplyr
-
 daily_steps = activity %&gt;% dplyr::group_by(date) %&gt;% dplyr::summarise(total_steps_per_day = sum(steps, na.rm=T))</code></pre>
 <ul>
 <li>Create a histogram using the hist function</li>
